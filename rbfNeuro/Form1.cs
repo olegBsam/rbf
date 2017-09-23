@@ -35,8 +35,10 @@ namespace rbfNeuro
             masX = new double[Count];
             masY = new double[Count];
 
+           // generated = generated.Select(o => o / 10).ToArray();
+
             deltaX = (generated.Max() - generated.Min()) / Count;
-            for (double val1 = generated[0], val2 = val1 + deltaX; i < Count; masX[i] = val1 + deltaX / 2, val1 = val2, val2 += deltaX, i++)
+            for (double val1 = generated[0], val2 = val1 + deltaX; i < Count; maasss[i] = val1, masX[i] = val1 + deltaX / 2, val1 = val2, val2 += deltaX, i++)
                 for (int k = 0; k < generated.Length; k++)
                     if (generated[k] >= val1 && generated[k] < val2)
                         masY[i]++;
@@ -51,64 +53,86 @@ namespace rbfNeuro
             }
         }
 
+
+        double[] maasss = new double[Count];
         Layer layer;
+
+        List<double> errors = new List<double>();
         private void button3_Click(object sender, EventArgs e)
         {
-            //layer.Neurons.ForEach(o => o.Impulse = 0);
-            //foreach (var o in layer.Neurons)
-            //{
-            //    o.Impulse;
-            //}
-            //layer.Output = 0;
+
+          
+            double error = 0;
+
+            layer.Neurons.ForEach(o => o.Impulse = 0);
+            layer.Output = 0;
 
             double[] masX;
             double[] masY;
 
-            GetXArray(generator.Generate(5000, 1).OrderBy(o => o).ToArray(), out masX, out masY);
+            GetXArray(generator.Generate(5000, Generator.rand.NextDouble() * 3).OrderBy(o => o).Select(o => o / 1.1).ToArray(), out masX, out masY);
 
 
-            double[] neuroOutput = new double[20];
+            double[] neuroOutput = new double[Count];
 
             for (int i = 0; i < masX.Length; i++)
             {
                 layer.LinearSum(masX[i]);
                 neuroOutput[i] = layer.Output;
-
+                error += (Math.Pow(masY[i] - layer.Output, 2));
             }
+            errors.Add(Math.Sqrt(error / (Count - 1)));
 
-            ToChart(2, masX, neuroOutput);
+
+            // ToChart(2, masX, masY);
+            ToChart(3, masX, neuroOutput);
 
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            layer = new Layer(20, chartX, deltaX / Math.Sqrt(40));
-            double n = 0.0015;///////////////////////////////////////////////
+            layer = new Layer(Count, chartX, deltaX / Math.Sqrt(45));
+            double n = 0.0012;///////////////////////////////////////////////
 
-
-            int Iter = 5000;
-            double[] err = new double[Iter * Count];
-            double[] indexes = new double[Iter * Count];
-            for (int i = 0; i < Iter * Count; i++)
-                indexes[i] = i;
-
-            Thread t = new Thread(() =>
+            for (int p = 0; p < 80; p++)
             {
-                for (int i = 0; i < Iter; i++)
-                {
-                    double[] m = new double[20];
-                    for (int k = 0; k < 20; k++)
+                genYNotSort = generator.Generate(5000, 1 /*Generator.rand.NextDouble() * 3*/);
+                genY = genYNotSort.OrderBy(o => o).ToArray();
+                GetXArray(genY, out chartX, out chartVal);
+
+                int Iter = 8000;
+                double[] err = new double[Iter * Count];
+                double[] indexes = new double[Iter * Count];
+                for (int i = 0; i < Iter * Count; i++)
+                    indexes[i] = i;
+                label1.Text = "....";
+                ////Thread t = new Thread(() =>
+                ////{
+                    for (int i = 0; i < Iter; i++)
                     {
-                        layer.GoLearn(n, chartVal[k], chartX[k]);
-                        layer.CalcE(chartVal[k], 0.00001);
+                        double[] m = new double[Count];
+                        for (int k = 0; k < Count; k++)
+                        {
+                            layer.GoLearn(n, chartVal[k],/* chartX*/ maasss[k]);
+
+                            layer.CalcE(chartVal[k], 0.00001);
+                        /// { label1.Text = "готово"; return; }
                         err[k * i] = layer.E;
-                        m[k] = layer.Output;
+                            m[k] = layer.Output;
+                        }
+                       // chart1.Invoke((MethodInvoker)delegate ()
+                        //{
+                            ToChart(1, chartX, m);
+                       // });
                     }
-                    chart1.Invoke((MethodInvoker)delegate () { ToChart(1, chartX, m); });
-                }
-                label1.Invoke((MethodInvoker)delegate () { label1.Text = "готово"; });
-            });
-            t.Start();
+                    //label1.Invoke((MethodInvoker)delegate ()
+                    //{
+                        label1.Text = "готово";
+                    //});
+               // });
+                //t.Start();
+
+            }
 
         }
 
@@ -120,7 +144,7 @@ namespace rbfNeuro
 
         private void button1_Click(object sender, EventArgs e)
         {
-            genYNotSort = generator.Generate(5000, Generator.rand.NextDouble() * 3);
+            genYNotSort = generator.Generate(5000, 1/* Generator.rand.NextDouble() * 3*/);
             genY = genYNotSort.OrderBy(o => o).ToArray();
             GetXArray(genY, out chartX, out chartVal);
             ToChart(0, chartX, chartVal);

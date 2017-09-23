@@ -35,7 +35,13 @@ namespace rbfNeuro
 
         public void LinearSum(double x)
         {
-            Output = Neurons.Select(o => o.CalcImpulse(x) * o.Weight).Sum();
+            Output = 0;
+            for (int i = 0; i < Neurons.Count; i++)
+            {
+                Output += Neurons[i].CalcImpulse(x) * Neurons[i].Weight;
+            }
+
+           // Output = Neurons.Select(o => o.CalcImpulse(x) * o.Weight).Sum();
         }
 
 

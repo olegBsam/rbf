@@ -13,12 +13,13 @@ namespace rbfNeuro
         public double Sigma { get; set; }
         public double C { get; set; }
         public double Impulse { get; set; }
+        public double LastW { get; set; }
 
         public Neuron(double c, double sig)
         {
             Sigma = sig;
             C = c;
-            Weight = rand.NextDouble();// - 0.5;
+            Weight = rand.NextDouble()- 0.5;
         }
         public double CalcImpulse(double x)
         {
@@ -29,6 +30,7 @@ namespace rbfNeuro
         }
         public void CorrectWeight(double corr, double x, double d, double y, double n)
         {
+            LastW = Weight;
             double w = Weight, c = C, o = Sigma;
 
             double xDifc = x - c, xDifc2 = xDifc * xDifc, sigmPow2 = Math.Pow(o, 2),
@@ -43,7 +45,7 @@ namespace rbfNeuro
 
             o = o - n * dE_dc * xDifc / o;
 
-            Weight = w; C = c; Sigma = o;
+            Weight = w + 0.0002 * (w - LastW); C = c; Sigma = o;
         }
     }
 }
